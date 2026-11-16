@@ -32,3 +32,6 @@ make help
 - Перезапуск прогона на последней версии DAG: `make rerun dag=taxi_pipeline run=scheduled__2024-01-01T00:00:00+00:00`.
 
 Сервисы: Airflow http://localhost:8080 · ClickHouse http://localhost:8123 · S3 http://localhost:8333
+
+## Лицензия
+Код — [MIT](LICENSE). Данные: [NYC TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page), погода — [Open-Meteo](https://open-meteo.com/) (CC BY 4.0).
