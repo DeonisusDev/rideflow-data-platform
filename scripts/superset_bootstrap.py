@@ -68,13 +68,19 @@ def main() -> None:
     charts = [
         # (name, viz, dataset, params, width, height)
         ("Поездки", "big_number_total", "agg_demand_hourly",
-         {"metric": trips, "y_axis_format": "SMART_NUMBER", "subheader": "янв–мар 2024"}, 3, 30),
+         {"metric": trips, "y_axis_format": "SMART_NUMBER"}, 3, 30),
         ("Выручка", "big_number_total", "agg_demand_hourly",
-         {"metric": revenue, "y_axis_format": "$,.3s"}, 3, 30),
+         {"metric": revenue, "y_axis_format": "$,.3s"}, 2, 30),
         ("Средний чек", "big_number_total", "agg_demand_hourly",
-         {"metric": sql("sum(revenue) / sum(trips)", "Средний чек"), "y_axis_format": "$,.2f"}, 3, 30),
+         {"metric": sql("sum(revenue) / sum(trips)", "Средний чек"), "y_axis_format": "$,.2f"}, 2, 30),
         ("Отбраковано DQ", "big_number_total", "dq_trip_rejections",
-         {"metric": sql("sumIf(rows, dq_status != 'ok') / sum(rows)", "Доля брака"), "y_axis_format": ".1%"}, 3, 30),
+         {"metric": sql("sumIf(rows, dq_status != 'ok') / sum(rows)", "Доля брака"), "y_axis_format": ".1%"}, 2, 30),
+        # period is computed from the data, so the dashboard never claims a stale range
+        ("Период данных", "table", "agg_demand_hourly",
+         {"query_mode": "aggregate", "groupby": [], "row_limit": 1,
+          "metrics": [sql("formatDateTime(min(day), '%d.%m.%Y')", "с"),
+                      sql("formatDateTime(max(day), '%d.%m.%Y')", "по"),
+                      sql("uniqExact(toStartOfMonth(day))", "месяцев")]}, 3, 30),
         ("Поездки по дням", "echarts_timeseries_line", "agg_demand_hourly",
          {"x_axis": "hour_ts", "time_grain_sqla": "P1D", "metrics": [trips], "groupby": [],
           "row_limit": 10000, "show_legend": False, "rich_tooltip": True, "y_axis_format": "SMART_NUMBER",

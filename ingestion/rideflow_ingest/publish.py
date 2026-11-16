@@ -35,6 +35,8 @@ STATS: dict[str, dict[str, str]] = {
         "trips_raw": "SELECT count() FROM raw.yellow_trips",
         "months": "SELECT uniqExact(_source_month) FROM marts.fct_trips",
         "revenue_usd": "SELECT round(sum(total_amount)) FROM marts.fct_trips",
+        "period_from": "SELECT toString(min(pickup_date)) FROM marts.fct_trips",
+        "period_to": "SELECT toString(max(pickup_date)) FROM marts.fct_trips",
     },
 }
 

@@ -38,7 +38,7 @@ const edges: { d: string; dashed?: boolean }[] = [
     <div class="card kpi"><span class="muted">отбраковано DQ</span><b id="k-rej">—</b></div>
     <div class="card kpi"><span class="muted">выручка</span><b id="k-rev">—</b></div>
     <div class="card kpi"><span class="muted">часов погоды</span><b id="k-wx">—</b></div>
-    <div class="card kpi"><span class="muted">обновлено</span><b id="k-upd">—</b></div>
+    <div class="card kpi"><span class="muted">период данных</span><b id="k-period">—</b></div>
   </div>
 
   <h2>Архитектура</h2>
@@ -299,7 +299,10 @@ const edges: { d: string; dashed?: boolean }[] = [
         document.getElementById("k-rev")!.textContent = `$${(s.revenue_usd / 1e6).toFixed(0)} млн`;
       }
       document.getElementById("k-wx")!.textContent = n(m.files["weather_hourly.parquet"]?.rows ?? 0);
-      document.getElementById("k-upd")!.textContent = new Date(m.generated_at).toLocaleDateString("ru");
+      if (s.period_from) {
+        const mon = (d: string) => new Date(d).toLocaleDateString("ru", { month: "short", year: "numeric" }).replace(" г.", "");
+        document.getElementById("k-period")!.textContent = `${mon(s.period_from)} – ${mon(s.period_to)}`;
+      }
     } catch { /* manifest is optional */ }
   }
 

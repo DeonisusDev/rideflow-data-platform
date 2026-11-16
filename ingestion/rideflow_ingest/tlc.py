@@ -55,6 +55,17 @@ def lake_key(month: date) -> str:
     return f"landing/tlc/yellow/year={month:%Y}/month={month:%m}/{file_name(month)}"
 
 
+def is_published(month: date) -> bool:
+    """TLC publishes each month ~2 months later; the CDN answers 403 until then."""
+    resp = requests.head(f"{CDN}/{file_name(month)}", timeout=30)
+    if resp.status_code == 200:
+        return True
+    if resp.status_code in (403, 404):
+        return False
+    resp.raise_for_status()
+    return False
+
+
 def land(month: date) -> str:
     key = lake_key(month)
     src = f"{CDN}/{file_name(month)}"
