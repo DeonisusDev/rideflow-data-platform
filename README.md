@@ -29,7 +29,9 @@ make help
   (партиция = месяц) → dbt: `stg_yellow_trips` (DQ-разметка) → `fct_trips` (incremental insert_overwrite)
   → `agg_demand_hourly`, `agg_zone_monthly`, `dq_trip_rejections` → Parquet.
 - `weather_pipeline` (@daily): Open-Meteo → ClickHouse `raw.weather_hourly` (ReplacingMergeTree) → `dim_weather_hour`.
-- Тесты — гейт через Cosmos (каждая модель = задача + её тесты), включая сверку raw ↔ fct.
+- Тесты — гейт через Cosmos (каждая модель = задача + её тесты), включая сверку raw ↔ dq ↔ fct по помесячным счётчикам.
+- Инкрементальность: `fct_trips`, `dq_trip_rejections`, `agg_zone_monthly` — insert_overwrite только изменившихся месяцев.
+  Прогон dbt без новых данных: ~16 мин → 29 с; с новым месяцем — 47 с (123 млн строк в raw).
 - Перезапуск прогона на последней версии DAG: `make rerun dag=taxi_pipeline run=scheduled__2024-01-01T00:00:00+00:00`.
 
 ## BI: Superset как код

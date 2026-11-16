@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-16T13:50:35.793892+00:00",
+  "generated_at": "2026-11-16T14:13:19.465360+00:00",
   "files": {
     "weather_daily.parquet": {
       "rows": 1052,
@@ -15,7 +15,7 @@
     },
     "zones_monthly.parquet": {
       "rows": 8463,
-      "bytes": 159357
+      "bytes": 159384
     },
     "dq_rejections.parquet": {
       "rows": 297,

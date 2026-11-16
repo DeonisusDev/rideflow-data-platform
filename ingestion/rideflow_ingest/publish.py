@@ -23,8 +23,11 @@ DATASETS: dict[str, dict[str, str]] = {
     },
     "taxi": {
         "demand_hourly.parquet": "SELECT * FROM marts.agg_demand_hourly ORDER BY hour_ts",
-        "zones_monthly.parquet": "SELECT * FROM marts.agg_zone_monthly ORDER BY month, pickups DESC",
-        "dq_rejections.parquet": "SELECT * FROM marts.dq_trip_rejections ORDER BY source_month, rows DESC",
+        # last_loaded_at is an incremental watermark, not data: keep it out of the site
+        "zones_monthly.parquet": "SELECT * EXCEPT (last_loaded_at) FROM marts.agg_zone_monthly "
+        "ORDER BY month, pickups DESC",
+        "dq_rejections.parquet": "SELECT * EXCEPT (last_loaded_at) FROM marts.dq_trip_rejections "
+        "ORDER BY source_month, rows DESC",
     },
 }
 
