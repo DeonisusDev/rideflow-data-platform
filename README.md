@@ -1,7 +1,7 @@
 # RideFlow — Data Engineering Portfolio
 
-Одна data-платформа вымышленного сервиса такси/доставки в NYC, закрывающая 15 классических DE-проектов,
-+ статический сайт-визитка с живыми данными (DuckDB-WASM в браузере): **https://deonisusdev.github.io/rideflow-data-platform/**
+Data-платформа вымышленного сервиса такси/доставки в NYC — от сырых данных до BI —
+и статический сайт-визитка с живыми данными (DuckDB-WASM в браузере): **https://deonisusdev.github.io/rideflow-data-platform/**
 
 **Стек:** Airflow 3 · ClickHouse · dbt · SeaweedFS (S3) · Superset · Astro + DuckDB-WASM · Docker Compose · GitHub Actions. В планах: Kafka, Debezium, Feast.
 
