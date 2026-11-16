@@ -1,0 +1,3 @@
+# Language stats: the site is presentation; the platform is Python/SQL.
+site/** linguist-documentation
+superset/dashboards/** linguist-generated

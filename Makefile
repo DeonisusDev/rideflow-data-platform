@@ -3,7 +3,7 @@ COMPOSE := docker compose
 -include .env
 export
 
-.PHONY: help env up-core up-batch down nuke ps logs ch backfill-weather dbt site-install site-dev site-build lint rerun dbt-parse
+.PHONY: help env up-core up-batch down nuke ps logs ch backfill-weather dbt site-install site-dev site-build lint rerun dbt-parse up-bi superset-export
 
 help: ## Show targets
 	@grep -E '^[a-z-]+:.*##' $(MAKEFILE_LIST) | awk -F':.*## ' '{printf "  \033[36m%-18s\033[0m %s\n", $$1, $$2}'
@@ -16,6 +16,12 @@ up-core: ## ClickHouse + Postgres + MinIO
 
 up-batch: ## core + Airflow  → http://localhost:8080
 	$(COMPOSE) --profile batch up -d --build --wait
+
+up-bi: ## ClickHouse + Superset (dashboards imported from superset/dashboards) → http://localhost:8088
+	$(COMPOSE) --profile bi up -d --build --wait
+
+superset-export: ## Export RideFlow dashboard from Superset back into superset/dashboards (YAML)
+	uv run --no-project --with requests python scripts/superset_export.py
 
 down: ## Stop everything (keeps data)
 	$(COMPOSE) --profile '*' down

@@ -1,0 +1,29 @@
+slice_name: "\u0422\u043E\u043F-15 \u0437\u043E\u043D \u043F\u043E \u0432\u044B\u0440\
+  \u0443\u0447\u043A\u0435"
+description: null
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  viz_type: echarts_timeseries_bar
+  datasource: 1__table
+  adhoc_filters: []
+  x_axis: zone
+  metrics:
+  - expressionType: SIMPLE
+    column:
+      column_name: revenue
+    aggregate: SUM
+    label: "\u0412\u044B\u0440\u0443\u0447\u043A\u0430, $"
+  groupby: []
+  orientation: horizontal
+  x_axis_sort: "\u0412\u044B\u0440\u0443\u0447\u043A\u0430, $"
+  x_axis_sort_asc: true
+  row_limit: 15
+  y_axis_format: $,.3s
+  show_legend: false
+query_context: null
+cache_timeout: null
+uuid: 510f3c4b-a565-4466-a2c2-d318029d6ba4
+version: 1.0.0
+dataset_uuid: 92da1173-f871-463e-8c4b-bfd5c253835d

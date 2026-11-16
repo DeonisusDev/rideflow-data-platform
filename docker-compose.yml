@@ -3,6 +3,7 @@
 #   core  : Postgres (Airflow metadb), ClickHouse (DWH), SeaweedFS (S3 data lake)
 #   (SeaweedFS instead of MinIO: MinIO images are no longer published on Docker Hub)
 #   batch : Airflow (api-server, scheduler, dag-processor)
+#   bi    : Superset over ClickHouse marts → http://localhost:8088
 # Later stages add: cdc, stream (Kafka), bi (Superset), obs.
 
 x-airflow-common: &airflow-common
@@ -65,7 +66,7 @@ services:
 
   clickhouse:
     image: clickhouse/clickhouse-server:25.8
-    profiles: [core, batch]
+    profiles: [core, batch, bi]
     environment:
       CLICKHOUSE_USER: ${CLICKHOUSE_USER}
       CLICKHOUSE_PASSWORD: ${CLICKHOUSE_PASSWORD}
@@ -143,7 +144,34 @@ services:
       retries: 20
     mem_limit: 512m
 
+  superset:
+    build:
+      context: .
+      dockerfile: superset/Dockerfile
+    image: rideflow/superset:local
+    profiles: [bi]
+    env_file: .env
+    environment:
+      SERVER_WORKER_AMOUNT: 1
+      SERVER_THREADS_AMOUNT: 8
+    command: ["/app/docker/rideflow-bootstrap.sh"]
+    ports:
+      - "8088:8088"
+    volumes:
+      - superset-home:/app/superset_home
+      - ./superset/dashboards:/app/rideflow/dashboards:ro
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fs", "http://localhost:8088/health"]
+      interval: 10s
+      start_period: 90s
+      retries: 20
+    mem_limit: 1280m
+
 volumes:
+  superset-home:
   lake-data:
   pg-data:
   ch-data:

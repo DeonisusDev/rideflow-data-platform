@@ -1,0 +1,19 @@
+slice_name: "\u0421\u0440\u0435\u0434\u043D\u0438\u0439 \u0447\u0435\u043A"
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  viz_type: big_number_total
+  datasource: 3__table
+  adhoc_filters: []
+  metric:
+    expressionType: SQL
+    sqlExpression: sum(revenue) / sum(trips)
+    label: "\u0421\u0440\u0435\u0434\u043D\u0438\u0439 \u0447\u0435\u043A"
+  y_axis_format: $,.2f
+query_context: null
+cache_timeout: null
+uuid: 98a4e12e-e8b1-4f77-ac1b-a91544aabf21
+version: 1.0.0
+dataset_uuid: 836fead1-11ca-4ba6-8f55-d65dc6bc486a

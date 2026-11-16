@@ -1,0 +1,22 @@
+slice_name: "\u041F\u043E\u0435\u0437\u0434\u043A\u0438"
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  viz_type: big_number_total
+  datasource: 3__table
+  adhoc_filters: []
+  metric:
+    expressionType: SIMPLE
+    column:
+      column_name: trips
+    aggregate: SUM
+    label: "\u041F\u043E\u0435\u0437\u0434\u043A\u0438"
+  y_axis_format: SMART_NUMBER
+  subheader: "\u044F\u043D\u0432\u2013\u043C\u0430\u0440 2024"
+query_context: null
+cache_timeout: null
+uuid: 2ffd66aa-87c5-4eac-8b4c-4a480615d0a3
+version: 1.0.0
+dataset_uuid: 836fead1-11ca-4ba6-8f55-d65dc6bc486a

@@ -1,0 +1,221 @@
+dashboard_title: "RideFlow \xB7 \u041E\u043F\u0435\u0440\u0430\u0446\u0438\u043E\u043D\
+  \u043D\u044B\u0435 \u043C\u0435\u0442\u0440\u0438\u043A\u0438"
+description: null
+css: null
+slug: rideflow-ops
+certified_by: null
+certification_details: null
+published: true
+uuid: 07b19d1e-09da-459b-b5f4-24818276bac2
+position:
+  CHART-0:
+    type: CHART
+    id: CHART-0
+    children: []
+    meta:
+      chartId: 1
+      uuid: 2ffd66aa-87c5-4eac-8b4c-4a480615d0a3
+      width: 3
+      height: 30
+      sliceName: "\u041F\u043E\u0435\u0437\u0434\u043A\u0438"
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-0
+  CHART-1:
+    type: CHART
+    id: CHART-1
+    children: []
+    meta:
+      chartId: 2
+      uuid: 9680be68-75fd-42ea-8366-433fa365d7f9
+      width: 3
+      height: 30
+      sliceName: "\u0412\u044B\u0440\u0443\u0447\u043A\u0430"
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-0
+  CHART-2:
+    type: CHART
+    id: CHART-2
+    children: []
+    meta:
+      chartId: 3
+      uuid: 98a4e12e-e8b1-4f77-ac1b-a91544aabf21
+      width: 3
+      height: 30
+      sliceName: "\u0421\u0440\u0435\u0434\u043D\u0438\u0439 \u0447\u0435\u043A"
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-0
+  CHART-3:
+    type: CHART
+    id: CHART-3
+    children: []
+    meta:
+      chartId: 4
+      uuid: 7335d539-bb53-41b5-88fb-f28842ea52e9
+      width: 3
+      height: 30
+      sliceName: "\u041E\u0442\u0431\u0440\u0430\u043A\u043E\u0432\u0430\u043D\u043E\
+        \ DQ"
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-0
+  ROW-0:
+    type: ROW
+    id: ROW-0
+    children:
+    - CHART-0
+    - CHART-1
+    - CHART-2
+    - CHART-3
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-4:
+    type: CHART
+    id: CHART-4
+    children: []
+    meta:
+      chartId: 5
+      uuid: 81827dc7-a231-4020-b290-5bc20af20fe0
+      width: 8
+      height: 50
+      sliceName: "\u041F\u043E\u0435\u0437\u0434\u043A\u0438 \u043F\u043E \u0434\u043D\
+        \u044F\u043C"
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1
+  CHART-5:
+    type: CHART
+    id: CHART-5
+    children: []
+    meta:
+      chartId: 6
+      uuid: 41670585-a59e-42f4-b4f2-7c4df49b1d73
+      width: 4
+      height: 50
+      sliceName: "\u041F\u0440\u0438\u0447\u0438\u043D\u044B \u043E\u0442\u0431\u0440\
+        \u0430\u043A\u043E\u0432\u043A\u0438"
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-1
+  ROW-1:
+    type: ROW
+    id: ROW-1
+    children:
+    - CHART-4
+    - CHART-5
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-6:
+    type: CHART
+    id: CHART-6
+    children: []
+    meta:
+      chartId: 7
+      uuid: cb6330fb-f7a6-42fe-b8a6-a3e905e6032b
+      width: 6
+      height: 50
+      sliceName: "\u0421\u043F\u0440\u043E\u0441 \u043F\u043E \u0447\u0430\u0441\u0443\
+        : \u0441\u0443\u0445\u043E vs \u043E\u0441\u0430\u0434\u043A\u0438"
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-2
+  CHART-7:
+    type: CHART
+    id: CHART-7
+    children: []
+    meta:
+      chartId: 8
+      uuid: 3e1d9af0-01d9-45f1-81ed-5a1603359263
+      width: 6
+      height: 50
+      sliceName: "\u041D\u0430\u0433\u0440\u0443\u0437\u043A\u0430: \u0434\u0435\u043D\
+        \u044C \u043D\u0435\u0434\u0435\u043B\u0438 (1 = \u043F\u043D) \xD7 \u0447\
+        \u0430\u0441"
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-2
+  ROW-2:
+    type: ROW
+    id: ROW-2
+    children:
+    - CHART-6
+    - CHART-7
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  CHART-8:
+    type: CHART
+    id: CHART-8
+    children: []
+    meta:
+      chartId: 9
+      uuid: 510f3c4b-a565-4466-a2c2-d318029d6ba4
+      width: 12
+      height: 60
+      sliceName: "\u0422\u043E\u043F-15 \u0437\u043E\u043D \u043F\u043E \u0432\u044B\
+        \u0440\u0443\u0447\u043A\u0435"
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    - ROW-3
+  ROW-3:
+    type: ROW
+    id: ROW-3
+    children:
+    - CHART-8
+    parents:
+    - ROOT_ID
+    - GRID_ID
+    meta:
+      background: BACKGROUND_TRANSPARENT
+  DASHBOARD_VERSION_KEY: v2
+  ROOT_ID:
+    type: ROOT
+    id: ROOT_ID
+    children:
+    - GRID_ID
+  GRID_ID:
+    type: GRID
+    id: GRID_ID
+    children:
+    - ROW-0
+    - ROW-1
+    - ROW-2
+    - ROW-3
+    parents:
+    - ROOT_ID
+  HEADER_ID:
+    type: HEADER
+    id: HEADER_ID
+    meta:
+      text: "RideFlow \xB7 \u041E\u043F\u0435\u0440\u0430\u0446\u0438\u043E\u043D\u043D\
+        \u044B\u0435 \u043C\u0435\u0442\u0440\u0438\u043A\u0438"
+metadata:
+  color_scheme: supersetColors
+  refresh_frequency: 0
+  cross_filters_enabled: true
+  timed_refresh_immune_slices: []
+  expanded_slices: {}
+  label_colors: {}
+  shared_label_colors: []
+  map_label_colors: {}
+  color_scheme_domain: []
+version: 1.0.0

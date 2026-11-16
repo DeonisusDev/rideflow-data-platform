@@ -1,0 +1,31 @@
+slice_name: "\u0421\u043F\u0440\u043E\u0441 \u043F\u043E \u0447\u0430\u0441\u0443\
+  : \u0441\u0443\u0445\u043E vs \u043E\u0441\u0430\u0434\u043A\u0438"
+description: null
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_bar
+params:
+  viz_type: echarts_timeseries_bar
+  datasource: 3__table
+  adhoc_filters: []
+  x_axis: hour_of_day
+  metrics:
+  - expressionType: SIMPLE
+    column:
+      column_name: trips
+    aggregate: AVG
+    label: "\u041F\u043E\u0435\u0437\u0434\u043E\u043A \u0432 \u0447\u0430\u0441"
+  groupby:
+  - expressionType: SQL
+    label: "\u041F\u043E\u0433\u043E\u0434\u0430"
+    sqlExpression: "if(is_wet, '\u041E\u0441\u0430\u0434\u043A\u0438', '\u0421\u0443\
+      \u0445\u043E')"
+  row_limit: 1000
+  show_legend: true
+  y_axis_format: SMART_NUMBER
+  x_axis_sort_asc: true
+query_context: null
+cache_timeout: null
+uuid: cb6330fb-f7a6-42fe-b8a6-a3e905e6032b
+version: 1.0.0
+dataset_uuid: 836fead1-11ca-4ba6-8f55-d65dc6bc486a

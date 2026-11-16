@@ -11,7 +11,7 @@ const nodes = [
   { id: "marts", x: 740, y: 250, label: "ClickHouse marts", sub: "fct_trips, agg_*" },
   { id: "pq", x: 500, y: 250, label: "Parquet export", sub: "publish_site_data" },
   { id: "wasm", x: 260, y: 250, label: "DuckDB-WASM", sub: "в вашем браузере" },
-  { id: "bi", x: 20, y: 250, label: "Superset", sub: "BI · скоро", soon: true },
+  { id: "bi", x: 20, y: 250, label: "Superset", sub: "BI · dashboards-as-code" },
 ];
 const edges: { d: string; dashed?: boolean }[] = [
   { d: "M220,70 H260" },                       // tlc → lake
@@ -21,7 +21,7 @@ const edges: { d: string; dashed?: boolean }[] = [
   { d: "M840,145 V250" },                      // dbt → marts
   { d: "M740,280 H700" },                      // marts → pq
   { d: "M500,280 H460" },                      // pq → wasm
-  { d: "M840,310 V326 H120 V310", dashed: true }, // marts → superset
+  { d: "M840,310 V326 H120 V310" },               // marts → superset
 ];
 ---
 <Base title="Batch Lakehouse · RideFlow" description="Batch: NYC Taxi + погода → S3 → ClickHouse → dbt → DuckDB-WASM">
@@ -43,7 +43,7 @@ const edges: { d: string; dashed?: boolean }[] = [
 
   <h2>Архитектура</h2>
   <div class="card diagram">
-    <svg viewBox="0 0 960 340" role="img" aria-label="Схема: NYC TLC и Open-Meteo → S3 lake → ClickHouse raw → dbt → ClickHouse marts → Parquet → DuckDB-WASM; Superset поверх marts. Оркестрация — Airflow.">
+    <svg viewBox="0 0 960 340" role="img" aria-label="Схема: NYC TLC и Open-Meteo → S3 lake → ClickHouse raw → dbt → ClickHouse marts → Parquet → DuckDB-WASM; Superset читает marts напрямую. Оркестрация — Airflow.">
       <defs>
         <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
           <path d="M0,0 L10,5 L0,10 z" fill="var(--line)" />
@@ -91,6 +91,17 @@ const edges: { d: string; dashed?: boolean }[] = [
   <p class="muted">Ни одна строка не исчезает молча: staging размечает каждую поездку, витрина берёт только <code class="mono">ok</code>, остальное считается здесь. Тест-сверка гарантирует, что raw = fct + брак.</p>
   <div class="card"><div id="ch-dq" class="chart short"></div></div>
 
+  <h2>BI-слой: Superset <span class="chip mono">dashboards-as-code</span></h2>
+  <p class="muted">
+    Для «внутренних» пользователей RideFlow — дашборд Superset прямо поверх витрин ClickHouse.
+    Он хранится в репозитории как YAML и импортируется при старте <code class="mono">make up-bi</code>:
+    чистая установка поднимает дашборд без единого клика. Сам Superset живёт локально, здесь — скриншоты.
+  </p>
+  <div class="shots">
+    <figure class="card shot"><img src={`${import.meta.env.BASE_URL}img/superset-overview.jpg`} alt="Superset: KPI поездок, выручки, среднего чека и доли брака; поездки по дням; причины отбраковки" loading="lazy" width="1366" height="593" /><figcaption class="muted">KPI, динамика поездок и причины отбраковки</figcaption></figure>
+    <figure class="card shot"><img src={`${import.meta.env.BASE_URL}img/superset-demand.jpg`} alt="Superset: спрос по часу в сухую и дождливую погоду, тепловая карта день недели × час, топ зон по выручке" loading="lazy" width="1366" height="593" /><figcaption class="muted">Спрос и погода, тепловая карта нагрузки, топ зон</figcaption></figure>
+  </div>
+
   <h2>SQL-песочница <span class="chip mono">DuckDB-WASM</span></h2>
   <p class="muted">Таблицы: <code class="mono">demand_hourly</code>, <code class="mono">zones_monthly</code>, <code class="mono">dq_rejections</code>, <code class="mono">weather_daily</code>, <code class="mono">weather_hourly</code>.</p>
   <div class="card sandbox">
@@ -107,6 +118,7 @@ const edges: { d: string; dashed?: boolean }[] = [
     <div class="card"><b>Дрейф схемы</b><p class="muted">В 2025 TLC добавили <code>cbd_congestion_fee</code>, а регистр колонок плавает. Явная структура + allow_missing_columns + case-insensitive matching.</p></div>
     <div class="card"><b>Время без сюрпризов</b><p class="muted">TLC пишет «наивное» локальное время, погода — UTC. В staging всё приводится к реальным моментам в America/New_York и стыкуется по часу.</p></div>
     <div class="card"><b>Тесты как гейт</b><p class="muted">Cosmos превращает каждую dbt-модель в задачу Airflow с тестами после неё: unique, relationships, сверка raw↔fct, «у каждого часа спроса есть погода».</p></div>
+    <div class="card"><b>BI как код</b><p class="muted">Дашборд экспортирован в YAML и версионируется в git. Пароль БД при экспорте маскируется и подставляется из env только при импорте внутри контейнера.</p></div>
     <div class="card"><b>Влезть в ноутбук</b><p class="muted">8 GB RAM на весь стек: лимиты памяти контейнеров, max_active_runs=1, ограничение потоков на загрузку.</p></div>
   </div>
 </Base>
@@ -327,6 +339,10 @@ const edges: { d: string; dashed?: boolean }[] = [
   .result :global(table) { border-collapse: collapse; font: 13px var(--mono); width: 100%; }
   .result :global(th), .result :global(td) { text-align: left; padding: 6px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
   .result :global(th) { color: var(--muted); font-weight: 500; position: sticky; top: 0; background: var(--surface); }
+  .shots { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+  .shot { margin: 0; padding: 10px; }
+  .shot img { width: 100%; height: auto; display: block; border-radius: 8px; }
+  .shot figcaption { font-size: 13px; padding: 8px 4px 0; }
   .decisions { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
   .decisions p { font-size: 14px; margin: 6px 0 0; }
   @media (max-width: 400px) { .two { grid-template-columns: 1fr; } }

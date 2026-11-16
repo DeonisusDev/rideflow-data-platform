@@ -1,0 +1,29 @@
+slice_name: "\u041F\u043E\u0435\u0437\u0434\u043A\u0438 \u043F\u043E \u0434\u043D\u044F\
+  \u043C"
+description: null
+certified_by: null
+certification_details: null
+viz_type: echarts_timeseries_line
+params:
+  viz_type: echarts_timeseries_line
+  datasource: 3__table
+  adhoc_filters: []
+  x_axis: hour_ts
+  time_grain_sqla: P1D
+  metrics:
+  - expressionType: SIMPLE
+    column:
+      column_name: trips
+    aggregate: SUM
+    label: "\u041F\u043E\u0435\u0437\u0434\u043A\u0438"
+  groupby: []
+  row_limit: 10000
+  show_legend: false
+  rich_tooltip: true
+  y_axis_format: SMART_NUMBER
+  zoomable: true
+query_context: null
+cache_timeout: null
+uuid: 81827dc7-a231-4020-b290-5bc20af20fe0
+version: 1.0.0
+dataset_uuid: 836fead1-11ca-4ba6-8f55-d65dc6bc486a

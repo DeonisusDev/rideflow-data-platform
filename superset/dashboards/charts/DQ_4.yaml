@@ -1,0 +1,19 @@
+slice_name: "\u041E\u0442\u0431\u0440\u0430\u043A\u043E\u0432\u0430\u043D\u043E DQ"
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  viz_type: big_number_total
+  datasource: 2__table
+  adhoc_filters: []
+  metric:
+    expressionType: SQL
+    sqlExpression: sumIf(rows, dq_status != 'ok') / sum(rows)
+    label: "\u0414\u043E\u043B\u044F \u0431\u0440\u0430\u043A\u0430"
+  y_axis_format: .1%
+query_context: null
+cache_timeout: null
+uuid: 7335d539-bb53-41b5-88fb-f28842ea52e9
+version: 1.0.0
+dataset_uuid: c3ae9e4d-5d02-46af-b0d7-d468ab50e9ba

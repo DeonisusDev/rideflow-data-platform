@@ -1,0 +1,21 @@
+slice_name: "\u0412\u044B\u0440\u0443\u0447\u043A\u0430"
+description: null
+certified_by: null
+certification_details: null
+viz_type: big_number_total
+params:
+  viz_type: big_number_total
+  datasource: 3__table
+  adhoc_filters: []
+  metric:
+    expressionType: SIMPLE
+    column:
+      column_name: revenue
+    aggregate: SUM
+    label: "\u0412\u044B\u0440\u0443\u0447\u043A\u0430, $"
+  y_axis_format: $,.3s
+query_context: null
+cache_timeout: null
+uuid: 9680be68-75fd-42ea-8366-433fa365d7f9
+version: 1.0.0
+dataset_uuid: 836fead1-11ca-4ba6-8f55-d65dc6bc486a
