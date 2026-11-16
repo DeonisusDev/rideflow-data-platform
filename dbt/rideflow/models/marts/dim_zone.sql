@@ -1,0 +1,7 @@
+{{ config(tags=['taxi']) }}
+select
+    LocationID   as zone_id,
+    Borough      as borough,
+    Zone         as zone,
+    service_zone
+from {{ ref('taxi_zones') }}

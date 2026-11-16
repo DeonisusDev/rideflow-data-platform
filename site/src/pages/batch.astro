@@ -1,0 +1,333 @@
+---
+import Base from "../layouts/Base.astro";
+
+const W = 200, H = 60;
+const nodes = [
+  { id: "tlc", x: 20, y: 40, label: "NYC TLC", sub: "Parquet · ~3M trips/мес" },
+  { id: "meteo", x: 20, y: 130, label: "Open-Meteo API", sub: "REST · hourly" },
+  { id: "lake", x: 260, y: 40, label: "S3 lake", sub: "SeaweedFS · landing/" },
+  { id: "raw", x: 500, y: 85, label: "ClickHouse raw", sub: "партиция = месяц" },
+  { id: "dbt", x: 740, y: 85, label: "dbt", sub: "staging → marts + тесты" },
+  { id: "marts", x: 740, y: 250, label: "ClickHouse marts", sub: "fct_trips, agg_*" },
+  { id: "pq", x: 500, y: 250, label: "Parquet export", sub: "publish_site_data" },
+  { id: "wasm", x: 260, y: 250, label: "DuckDB-WASM", sub: "в вашем браузере" },
+  { id: "bi", x: 20, y: 250, label: "Superset", sub: "BI · скоро", soon: true },
+];
+const edges: { d: string; dashed?: boolean }[] = [
+  { d: "M220,70 H260" },                       // tlc → lake
+  { d: "M460,70 H480 V100 H500" },             // lake → raw (via s3())
+  { d: "M220,160 H480 V130 H500" },            // meteo → raw
+  { d: "M700,115 H740" },                      // raw → dbt
+  { d: "M840,145 V250" },                      // dbt → marts
+  { d: "M740,280 H700" },                      // marts → pq
+  { d: "M500,280 H460" },                      // pq → wasm
+  { d: "M840,310 V326 H120 V310", dashed: true }, // marts → superset
+];
+---
+<Base title="Batch Lakehouse · RideFlow" description="Batch: NYC Taxi + погода → S3 → ClickHouse → dbt → DuckDB-WASM">
+  <span class="chip live">● блок 01 · live</span>
+  <h1>Batch Lakehouse</h1>
+  <p class="muted lead">
+    Помесячно загружаю поездки жёлтых такси Нью-Йорка и почасовую погоду: сырые файлы ложатся в S3,
+    ClickHouse читает их напрямую, dbt чистит данные, размечает брак, строит витрины и проверяет их тестами.
+    Готовые витрины публикуются в Parquet — все графики ниже считаются прямо в вашем браузере.
+  </p>
+
+  <div class="kpis">
+    <div class="card kpi"><span class="muted">поездок в витрине</span><b id="k-trips">—</b></div>
+    <div class="card kpi"><span class="muted">отбраковано DQ</span><b id="k-rej">—</b></div>
+    <div class="card kpi"><span class="muted">выручка</span><b id="k-rev">—</b></div>
+    <div class="card kpi"><span class="muted">часов погоды</span><b id="k-wx">—</b></div>
+    <div class="card kpi"><span class="muted">обновлено</span><b id="k-upd">—</b></div>
+  </div>
+
+  <h2>Архитектура</h2>
+  <div class="card diagram">
+    <svg viewBox="0 0 960 340" role="img" aria-label="Схема: NYC TLC и Open-Meteo → S3 lake → ClickHouse raw → dbt → ClickHouse marts → Parquet → DuckDB-WASM; Superset поверх marts. Оркестрация — Airflow.">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--line)" />
+        </marker>
+      </defs>
+      <rect x="6" y="8" width="948" height="200" rx="14" class="orch" />
+      <text x="20" y="28" class="orch-label">Airflow · taxi_pipeline (@monthly) · weather_pipeline (@daily)</text>
+      {edges.map((e, i) => (
+        <g>
+          <path id={`e${i}`} d={e.d} fill="none" stroke="var(--line)" stroke-width="2"
+            stroke-dasharray={e.dashed ? "5 5" : undefined} marker-end="url(#arrow)" />
+          {!e.dashed && (
+            <circle r="4.5" fill="var(--accent)">
+              <animateMotion dur="1.4s" repeatCount="indefinite" begin={`${i * 0.35}s`}><mpath href={`#e${i}`} /></animateMotion>
+            </circle>
+          )}
+        </g>
+      ))}
+      {nodes.map((n) => (
+        <g class={`node ${n.soon ? "soon" : ""}`}>
+          <rect x={n.x} y={n.y} width={W} height={H} rx="10" />
+          <text x={n.x + 14} y={n.y + 26} class="t">{n.label}</text>
+          <text x={n.x + 14} y={n.y + 45} class="s">{n.sub}</text>
+        </g>
+      ))}
+    </svg>
+  </div>
+
+  <h2>Дождь меняет спрос</h2>
+  <p class="muted">Среднее число поездок в час по времени суток: часы с осадками против сухих.</p>
+  <div class="card"><div id="ch-hour" class="chart"></div></div>
+
+  <div class="two">
+    <div>
+      <h2>Поездки по дням и осадки</h2>
+      <div class="card"><div id="ch-daily" class="chart"></div></div>
+    </div>
+    <div>
+      <h2>Топ-10 зон посадки</h2>
+      <div class="card"><div id="ch-zones" class="chart"></div></div>
+    </div>
+  </div>
+
+  <h2>Качество данных: что отбраковано и почему</h2>
+  <p class="muted">Ни одна строка не исчезает молча: staging размечает каждую поездку, витрина берёт только <code class="mono">ok</code>, остальное считается здесь. Тест-сверка гарантирует, что raw = fct + брак.</p>
+  <div class="card"><div id="ch-dq" class="chart short"></div></div>
+
+  <h2>SQL-песочница <span class="chip mono">DuckDB-WASM</span></h2>
+  <p class="muted">Таблицы: <code class="mono">demand_hourly</code>, <code class="mono">zones_monthly</code>, <code class="mono">dq_rejections</code>, <code class="mono">weather_daily</code>, <code class="mono">weather_hourly</code>.</p>
+  <div class="card sandbox">
+    <div class="presets" id="presets"></div>
+    <textarea id="sql" spellcheck="false" class="mono"></textarea>
+    <div class="bar"><button id="run">Выполнить ⌘↵</button><span id="status" class="muted mono">загружаю DuckDB…</span></div>
+    <div class="result"><table id="result"></table></div>
+  </div>
+
+  <h2>Инженерные решения</h2>
+  <div class="decisions">
+    <div class="card"><b>Идемпотентность по партициям</b><p class="muted">Raw партиционирован по месяцу файла: перезагрузка = DROP PARTITION + INSERT. fct_trips — incremental <code>insert_overwrite</code>, заменяет ровно изменившиеся месяцы.</p></div>
+    <div class="card"><b>ClickHouse читает S3 сам</b><p class="muted">Файл не проходит через Python: <code>INSERT … SELECT FROM s3()</code> с явной схемой. Airflow только оркестрирует.</p></div>
+    <div class="card"><b>Дрейф схемы</b><p class="muted">В 2025 TLC добавили <code>cbd_congestion_fee</code>, а регистр колонок плавает. Явная структура + allow_missing_columns + case-insensitive matching.</p></div>
+    <div class="card"><b>Время без сюрпризов</b><p class="muted">TLC пишет «наивное» локальное время, погода — UTC. В staging всё приводится к реальным моментам в America/New_York и стыкуется по часу.</p></div>
+    <div class="card"><b>Тесты как гейт</b><p class="muted">Cosmos превращает каждую dbt-модель в задачу Airflow с тестами после неё: unique, relationships, сверка raw↔fct, «у каждого часа спроса есть погода».</p></div>
+    <div class="card"><b>Влезть в ноутбук</b><p class="muted">8 GB RAM на весь стек: лимиты памяти контейнеров, max_active_runs=1, ограничение потоков на загрузку.</p></div>
+  </div>
+</Base>
+
+<script>
+  import * as duckdb from "@duckdb/duckdb-wasm";
+  import * as echarts from "echarts";
+
+  const base = import.meta.env.BASE_URL;
+  const dataUrl = (f: string) => new URL(`${base}data/${f}`, location.href).href;
+  const css = (v: string) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+  const TABLES = { demand_hourly: "demand_hourly", zones_monthly: "zones_monthly", dq_rejections: "dq_rejections", weather_daily: "weather_daily", weather_hourly: "weather_hourly" };
+
+  const PRESETS: Record<string, string> = {
+    "Эффект дождя по часам": `SELECT hour_of_day,\n       round(avg(trips) FILTER (WHERE is_wet), 0)     AS wet,\n       round(avg(trips) FILTER (WHERE NOT is_wet), 0) AS dry,\n       round(100 * (wet / dry - 1), 1)               AS uplift_pct\nFROM demand_hourly\nGROUP BY 1 ORDER BY 1;`,
+    "Топ зон по выручке": `SELECT zone, borough, sum(pickups) AS pickups,\n       round(sum(revenue)) AS revenue_usd\nFROM zones_monthly\nGROUP BY ALL ORDER BY revenue_usd DESC\nLIMIT 15;`,
+    "Чаевые и погода": `SELECT condition, count(*) AS hours,\n       round(avg(avg_tip_rate) * 100, 2) AS tip_pct,\n       round(avg(avg_speed_mph), 1) AS speed_mph\nFROM demand_hourly\nGROUP BY 1 ORDER BY hours DESC;`,
+    "Причины брака": `SELECT dq_status, sum(rows) AS rows\nFROM dq_rejections\nGROUP BY 1 ORDER BY 2 DESC;`,
+    "Холод vs поездки": `SELECT floor(temperature_c / 5) * 5 AS temp_bucket_c,\n       count(*) AS hours, round(avg(trips)) AS avg_trips\nFROM demand_hourly\nGROUP BY 1 ORDER BY 1;`,
+  };
+
+  const sqlEl = document.getElementById("sql") as HTMLTextAreaElement;
+  const statusEl = document.getElementById("status")!;
+  const resultEl = document.getElementById("result")!;
+  const presetsEl = document.getElementById("presets")!;
+  sqlEl.value = Object.values(PRESETS)[0];
+  for (const [name, q] of Object.entries(PRESETS)) {
+    const b = document.createElement("button");
+    b.className = "chip"; b.textContent = name;
+    b.onclick = () => { sqlEl.value = q; run(); };
+    presetsEl.append(b);
+  }
+
+  let conn: duckdb.AsyncDuckDBConnection;
+
+  async function init() {
+    const bundle = await duckdb.selectBundle(duckdb.getJsDelivrBundles());
+    const workerUrl = URL.createObjectURL(new Blob([`importScripts("${bundle.mainWorker}");`], { type: "text/javascript" }));
+    const db = new duckdb.AsyncDuckDB(new duckdb.VoidLogger(), new Worker(workerUrl));
+    await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+    URL.revokeObjectURL(workerUrl);
+    conn = await db.connect();
+    // Files are small, so fetch them whole instead of HTTP range reads —
+    // works on any static host / dev server, no Range support needed.
+    await Promise.all(Object.keys(TABLES).map(async (t) => {
+      const res = await fetch(dataUrl(`${t}.parquet`));
+      if (!res.ok) throw new Error(`${t}.parquet: HTTP ${res.status}`);
+      await db.registerFileBuffer(`${t}.parquet`, new Uint8Array(await res.arrayBuffer()));
+      await conn.query(`CREATE VIEW ${t} AS SELECT * FROM '${t}.parquet'`);
+    }));
+  }
+
+  const q = async (sql: string) => (await conn.query(sql)).toArray().map((r: any) => r.toJSON());
+  const fmt = (v: unknown) =>
+    typeof v === "bigint" ? v.toString()
+    : typeof v === "number" ? (Number.isInteger(v) ? v : v.toFixed(2))
+    : String(v ?? "∅");
+
+  async function run() {
+    if (!conn) return;
+    statusEl.textContent = "выполняю…";
+    const t0 = performance.now();
+    try {
+      const table = await conn.query(sqlEl.value);
+      const cols = table.schema.fields.map((f) => f.name);
+      const kinds = table.schema.fields.map((f) => String(f.type));
+      const data = table.toArray().map((r: any) => r.toJSON());
+      const cell = (v: unknown, k: string) =>
+        typeof v === "number" && k.startsWith("Date") ? new Date(v).toISOString().slice(0, 10)
+        : typeof v === "number" && k.startsWith("Timestamp") ? new Date(v).toISOString().slice(0, 16).replace("T", " ")
+        : fmt(v);
+      resultEl.innerHTML =
+        `<thead><tr>${cols.map((c) => `<th>${c}</th>`).join("")}</tr></thead>` +
+        `<tbody>${data.slice(0, 200).map((r: any) => `<tr>${cols.map((c, i) => `<td>${cell(r[c], kinds[i])}</td>`).join("")}</tr>`).join("")}</tbody>`;
+      statusEl.textContent = `${data.length} строк · ${(performance.now() - t0).toFixed(0)} мс`;
+    } catch (e: any) {
+      resultEl.innerHTML = "";
+      statusEl.textContent = `ошибка: ${e.message}`;
+    }
+  }
+
+  // ---------- charts ----------
+  const charts: echarts.ECharts[] = [];
+  function mk(id: string, option: echarts.EChartsOption) {
+    const c = echarts.init(document.getElementById(id)!);
+    const text = css("--muted"), grid = css("--border");
+    const axis = { axisLabel: { color: text }, axisLine: { lineStyle: { color: grid } }, splitLine: { lineStyle: { color: grid } }, nameTextStyle: { color: text } };
+    const fix = (a: any) => (Array.isArray(a) ? a.map((x) => ({ ...axis, ...x })) : a && { ...axis, ...a });
+    c.setOption({
+      textStyle: { fontFamily: "Inter" },
+      tooltip: { trigger: "axis" },
+      legend: { textStyle: { color: text }, top: 0 },
+      grid: { left: 52, right: 52, top: 36, bottom: 32, containLabel: false },
+      ...option,
+      xAxis: fix(option.xAxis), yAxis: fix(option.yAxis),
+    });
+    charts.push(c);
+  }
+
+  // each chart is independent: one failing query must not blank the others
+  const safe = (name: string, fn: () => Promise<void>) =>
+    fn().catch((e) => console.error(`[rideflow] chart ${name}:`, e));
+
+  async function drawCharts() {
+    await Promise.all([safe("hour", chartHour), safe("daily", chartDaily), safe("zones", chartZones), safe("dq", chartDq)]);
+    addEventListener("resize", () => charts.forEach((c) => c.resize()));
+  }
+
+  async function chartHour() {
+    const hourly = await q(`
+      SELECT hour_of_day::INT AS h,
+             avg(trips) FILTER (WHERE is_wet)::DOUBLE     AS wet,
+             avg(trips) FILTER (WHERE NOT is_wet)::DOUBLE AS dry
+      FROM demand_hourly GROUP BY 1 ORDER BY 1`);
+    mk("ch-hour", {
+      tooltip: { trigger: "axis", valueFormatter: (v: any) => Math.round(v).toLocaleString("ru") },
+      xAxis: { type: "category", data: hourly.map((r: any) => `${r.h}:00`), splitLine: { show: false } },
+      yAxis: { type: "value", name: "поездок/час" },
+      series: [
+        { name: "Сухо", type: "line", smooth: true, showSymbol: false, lineStyle: { width: 2.5, color: css("--c1") }, itemStyle: { color: css("--c1") }, data: hourly.map((r: any) => r.dry) },
+        { name: "Осадки", type: "line", smooth: true, showSymbol: false, lineStyle: { width: 2.5, color: css("--c2") }, itemStyle: { color: css("--c2") }, areaStyle: { color: css("--c2"), opacity: 0.08 }, data: hourly.map((r: any) => r.wet) },
+      ],
+    });
+
+  }
+
+  async function chartDaily() {
+    const daily = await q(`
+      SELECT epoch_ms(day::TIMESTAMP)::DOUBLE AS d, sum(trips)::DOUBLE AS trips, sum(precipitation_mm)::DOUBLE AS precip
+      FROM demand_hourly GROUP BY 1 ORDER BY 1`);
+    mk("ch-daily", {
+      xAxis: { type: "time", splitLine: { show: false } },
+      yAxis: [{ type: "value", name: "поездки" }, { type: "value", name: "мм", splitLine: { show: false } }],
+      series: [
+        { name: "Поездки", type: "line", showSymbol: false, lineStyle: { color: css("--c1"), width: 2 }, itemStyle: { color: css("--c1") }, data: daily.map((r: any) => [r.d, r.trips]) },
+        { name: "Осадки", type: "bar", yAxisIndex: 1, itemStyle: { color: css("--c2"), opacity: 0.6 }, data: daily.map((r: any) => [r.d, r.precip]) },
+      ],
+    });
+
+  }
+
+  async function chartZones() {
+    const zones = await q(`
+      SELECT zone, sum(pickups)::DOUBLE AS pickups FROM zones_monthly GROUP BY 1 ORDER BY 2 DESC LIMIT 10`);
+    zones.reverse();
+    mk("ch-zones", {
+      legend: { show: false },
+      tooltip: { trigger: "axis", axisPointer: { type: "shadow" } },
+      grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
+      xAxis: { type: "value" },
+      yAxis: { type: "category", data: zones.map((r: any) => r.zone), splitLine: { show: false } },
+      series: [{ type: "bar", name: "Посадки", itemStyle: { color: css("--c1"), borderRadius: [0, 4, 4, 0] }, data: zones.map((r: any) => r.pickups) }],
+    });
+
+  }
+
+  async function chartDq() {
+    const dq = await q(`
+      SELECT dq_status, sum(rows)::DOUBLE AS rows FROM dq_rejections WHERE dq_status <> 'ok' GROUP BY 1 ORDER BY 2 DESC`);
+    mk("ch-dq", {
+      legend: { show: false },
+      tooltip: { trigger: "axis", axisPointer: { type: "shadow" }, valueFormatter: (v: any) => Math.round(v).toLocaleString("ru") },
+      grid: { left: 8, right: 24, top: 8, bottom: 24, containLabel: true },
+      xAxis: { type: "value" },
+      yAxis: { type: "category", data: dq.map((r: any) => r.dq_status).reverse(), splitLine: { show: false } },
+      series: [{ type: "bar", name: "строк", itemStyle: { color: css("--c4"), borderRadius: [0, 4, 4, 0] }, data: dq.map((r: any) => r.rows).reverse() }],
+    });
+  }
+
+  async function kpis() {
+    try {
+      const m = await (await fetch(dataUrl("manifest.json"))).json();
+      const s = m.stats ?? {};
+      const n = (v: number) => v.toLocaleString("ru");
+      if (s.trips_valid) {
+        document.getElementById("k-trips")!.textContent = `${(s.trips_valid / 1e6).toFixed(1)} млн`;
+        document.getElementById("k-rej")!.textContent = `${(100 * (1 - s.trips_valid / s.trips_raw)).toFixed(1)}%`;
+        document.getElementById("k-rev")!.textContent = `$${(s.revenue_usd / 1e6).toFixed(0)} млн`;
+      }
+      document.getElementById("k-wx")!.textContent = n(m.files["weather_hourly.parquet"]?.rows ?? 0);
+      document.getElementById("k-upd")!.textContent = new Date(m.generated_at).toLocaleDateString("ru");
+    } catch { /* manifest is optional */ }
+  }
+
+  sqlEl.addEventListener("keydown", (e) => { if ((e.metaKey || e.ctrlKey) && e.key === "Enter") run(); });
+  document.getElementById("run")!.onclick = run;
+  kpis();
+  init()
+    .then(() => Promise.all([run(), drawCharts()]))
+    .catch((e) => { statusEl.textContent = `не удалось загрузить данные: ${e.message}`; });
+</script>
+
+<style>
+  .lead { font-size: 18px; max-width: 780px; }
+  .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 24px; }
+  .kpi { display: flex; flex-direction: column; gap: 4px; padding: 16px; }
+  .kpi span { font-size: 13px; }
+  .kpi b { font-size: 24px; font-variant-numeric: tabular-nums; }
+  .diagram { overflow-x: auto; }
+  .diagram svg { width: 100%; min-width: 680px; height: auto; display: block; }
+  .orch { fill: none; stroke: var(--border); stroke-dasharray: 4 6; }
+  .orch-label { fill: var(--muted); font: 12px var(--mono); }
+  .node rect { fill: var(--surface); stroke: var(--border); stroke-width: 1.5; }
+  .node .t { fill: var(--text); font: 600 15px Inter, sans-serif; }
+  .node .s { fill: var(--muted); font: 12px var(--mono); }
+  .node.soon { opacity: .55; }
+  .chart { height: 340px; }
+  .chart.short { height: 260px; }
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 0 16px; }
+  .sandbox { display: flex; flex-direction: column; gap: 12px; }
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; }
+  .presets :global(.chip) { cursor: pointer; color: var(--text); font: 500 12px var(--mono); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 4px 10px; }
+  .presets :global(.chip:hover) { border-color: var(--accent); }
+  textarea { width: 100%; min-height: 150px; resize: vertical; padding: 12px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg); color: var(--text); font-size: 14px; }
+  .bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  button#run { background: var(--accent); color: #fff; border: 0; border-radius: 8px; padding: 9px 16px; font: 600 14px Inter, sans-serif; cursor: pointer; }
+  .result { overflow: auto; max-height: 420px; }
+  .result :global(table) { border-collapse: collapse; font: 13px var(--mono); width: 100%; }
+  .result :global(th), .result :global(td) { text-align: left; padding: 6px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  .result :global(th) { color: var(--muted); font-weight: 500; position: sticky; top: 0; background: var(--surface); }
+  .decisions { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
+  .decisions p { font-size: 14px; margin: 6px 0 0; }
+  @media (max-width: 400px) { .two { grid-template-columns: 1fr; } }
+</style>

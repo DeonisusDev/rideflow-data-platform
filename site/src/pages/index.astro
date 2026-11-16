@@ -1,0 +1,62 @@
+---
+import Base from "../layouts/Base.astro";
+const base = import.meta.env.BASE_URL;
+
+const blocks = [
+  { n: 1, slug: "batch", title: "Batch Lakehouse", status: "live",
+    covers: ["NYC Taxi Lakehouse", "E-commerce Warehouse", "API-to-Warehouse", "Weather Pipeline"],
+    stack: ["Airflow", "ClickHouse", "dbt", "MinIO"] },
+  { n: 2, slug: "cdc", title: "CDC · Customer 360 · Reverse ETL", status: "soon",
+    covers: ["PostgreSQL CDC", "Customer 360", "Reverse ETL"],
+    stack: ["Debezium", "Kafka Connect", "ClickHouse"] },
+  { n: 3, slug: "stream", title: "Real-time Streaming", status: "soon",
+    covers: ["Clickstream Pipeline", "IoT Telemetry", "Stock Streaming (bonus)"],
+    stack: ["Kafka", "Schema Registry", "ClickHouse MV"] },
+  { n: 4, slug: "obs", title: "Observability", status: "soon",
+    covers: ["Data Quality Monitoring", "Lineage Explorer", "Cost Monitor"],
+    stack: ["Soda", "OpenLineage", "Marquez", "Grafana"] },
+  { n: 5, slug: "ml", title: "ML Feature Platform", status: "soon",
+    covers: ["ML Feature Pipeline"],
+    stack: ["Feast", "Redis"] },
+];
+---
+<Base title="RideFlow Data Platform">
+  <section class="hero">
+    <span class="chip">Data Engineering portfolio</span>
+    <h1>Одна платформа данных —<br />от сырых событий до BI и ML</h1>
+    <p class="muted lead">
+      RideFlow — вымышленный сервис такси и доставки в Нью-Йорке. Я построил для него data-платформу:
+      batch и streaming пайплайны, CDC, качество данных, lineage, BI и feature store.
+      Всё поднимается локально одной командой. 15 классических DE-проектов — как части одной системы.
+    </p>
+  </section>
+
+  <h2>Карта платформы</h2>
+  <div class="grid">
+    {blocks.map((b) => (
+      <a class={`card block ${b.status}`} href={b.status === "live" ? `${base}${b.slug}/` : undefined}>
+        <div class="row">
+          <span class="num mono">0{b.n}</span>
+          <span class={`chip ${b.status === "live" ? "live" : ""}`}>{b.status === "live" ? "● live" : "в работе"}</span>
+        </div>
+        <h3>{b.title}</h3>
+        <ul class="muted">{b.covers.map((c) => <li>{c}</li>)}</ul>
+        <div class="stack">{b.stack.map((s) => <span class="chip">{s}</span>)}</div>
+      </a>
+    ))}
+  </div>
+</Base>
+
+<style>
+  .hero { max-width: 760px; }
+  .lead { font-size: 18px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .block { text-decoration: none; display: flex; flex-direction: column; gap: 6px; transition: transform .15s, border-color .15s; }
+  .block.live:hover { transform: translateY(-2px); border-color: var(--accent); }
+  .block.soon { opacity: .7; }
+  .row { display: flex; justify-content: space-between; align-items: center; }
+  .num { color: var(--accent); font-weight: 500; }
+  h3 { margin: 6px 0 0; font-size: 18px; }
+  ul { margin: 4px 0 8px; padding-left: 18px; font-size: 14px; }
+  .stack { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+</style>

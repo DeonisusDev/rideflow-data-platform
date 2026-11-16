@@ -1,0 +1,66 @@
+---
+interface Props { title: string; description?: string }
+const { title, description = "RideFlow — end-to-end data engineering platform portfolio" } = Astro.props;
+const base = import.meta.env.BASE_URL;
+---
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href={base}><span class="dot"></span>RideFlow<span class="muted"> / data platform</span></a>
+      <nav>
+        <a href={`${base}batch/`}>Batch</a>
+        <a href="https://github.com/DeonisusDev/rideflow-data-platform" class="muted">GitHub</a>
+      </nav>
+    </header>
+    <main><slot /></main>
+    <footer class="muted">Built with Airflow · ClickHouse · dbt · SeaweedFS (S3) · DuckDB-WASM. Data: NYC TLC, Open-Meteo.</footer>
+  </body>
+</html>
+
+<style is:global>
+  :root {
+    --bg: #f7f7f5; --surface: #ffffff; --border: #e4e4df; --text: #1b1b18; --muted: #6b6b63;
+    --accent: #e85d2a; --accent-soft: #fde6dc; --ok: #2f8f5b; --line: #c9c9c1;
+    --c1: #e85d2a; --c2: #2f6fd6; --c3: #2f8f5b; --c4: #8a5cd6;
+    --radius: 12px; --mono: "JetBrains Mono", ui-monospace, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #121211; --surface: #1b1b19; --border: #2c2c29; --text: #ecebe6; --muted: #9a9a90;
+      --accent: #ff7a45; --accent-soft: #3a2218; --ok: #4fbf82; --line: #44443f;
+      --c1: #ff7a45; --c2: #6c9eff; --c3: #4fbf82; --c4: #b08cff;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #121211; --surface: #1b1b19; --border: #2c2c29; --text: #ecebe6; --muted: #9a9a90;
+    --accent: #ff7a45; --accent-soft: #3a2218; --ok: #4fbf82; --line: #44443f;
+    --c1: #ff7a45; --c2: #6c9eff; --c3: #4fbf82; --c4: #b08cff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 16px/1.55 Inter, system-ui, sans-serif; }
+  a { color: inherit; }
+  main { max-width: 1120px; margin: 0 auto; padding: 0 16px 64px; }
+  .muted { color: var(--muted); }
+  .mono { font-family: var(--mono); }
+  .topbar { display: flex; justify-content: space-between; align-items: center; max-width: 1120px; margin: 0 auto; padding: 18px 16px; }
+  .topbar nav { display: flex; gap: 20px; font-size: 14px; }
+  .topbar nav a { text-decoration: none; }
+  .brand { font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+  .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--accent); }
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+  h1 { font-size: clamp(30px, 5vw, 48px); line-height: 1.1; letter-spacing: -0.02em; margin: 40px 0 12px; }
+  h2 { font-size: 22px; margin: 48px 0 12px; letter-spacing: -0.01em; }
+  .chip { display: inline-block; font: 500 12px var(--mono); padding: 3px 9px; border-radius: 999px; border: 1px solid var(--border); background: var(--surface); }
+  .chip.live { border-color: var(--ok); color: var(--ok); }
+  footer { max-width: 1120px; margin: 0 auto; padding: 24px 16px 40px; font-size: 13px; border-top: 1px solid var(--border); }
+</style>

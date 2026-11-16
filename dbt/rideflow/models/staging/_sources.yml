@@ -1,0 +1,14 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    tables:
+      - name: weather_hourly
+        description: Hourly NYC weather from Open-Meteo archive API (ReplacingMergeTree, may contain re-ingested duplicates until merge).
+        loaded_at_field: _ingested_at
+        freshness:
+          warn_after: {count: 2, period: day}
+          error_after: {count: 7, period: day}
+      - name: yellow_trips
+        description: NYC TLC yellow taxi trips, one partition per source month. Timestamps are naive NYC local time.

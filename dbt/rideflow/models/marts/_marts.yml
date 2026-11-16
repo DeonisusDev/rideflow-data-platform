@@ -1,0 +1,48 @@
+version: 2
+
+models:
+  - name: dim_weather_hour
+    description: Hourly weather for NYC, one row per hour. Grain = hour_ts.
+    columns:
+      - name: hour_ts
+        data_tests: [unique, not_null]
+      - name: condition
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [clear, cloudy, fog, rain, snow, storm]
+  - name: weather_daily
+    description: Daily weather summary (local NYC date). Published to the site.
+    columns:
+      - name: day
+        data_tests: [unique, not_null]
+  - name: dim_zone
+    description: NYC TLC taxi zones (265). Source = TLC lookup CSV (dbt seed).
+    columns:
+      - name: zone_id
+        data_tests: [unique, not_null]
+  - name: fct_trips
+    description: One valid yellow-taxi trip. Invalid rows are counted in dq_trip_rejections.
+    columns:
+      - name: pickup_ts
+        data_tests: [not_null]
+      - name: pickup_zone_id
+        data_tests:
+          - relationships:
+              arguments:
+                to: ref('dim_zone')
+                field: zone_id
+      - name: payment_method
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [card, cash, no_charge, dispute, other]
+  - name: agg_demand_hourly
+    description: Hourly trip demand joined with weather. Published to the site.
+    columns:
+      - name: hour_ts
+        data_tests: [unique, not_null]
+  - name: agg_zone_monthly
+    description: Pickups and revenue per zone and month. Published to the site.
+  - name: dq_trip_rejections
+    description: Row counts per source month and DQ status (ok + rejection reasons). Published to the site.

@@ -1,0 +1,34 @@
+# RideFlow — Data Engineering Portfolio
+
+Одна data-платформа вымышленного сервиса такси/доставки в NYC, закрывающая 15 классических DE-проектов,
++ статический сайт-визитка с живыми данными (DuckDB-WASM в браузере): **https://deonisusdev.github.io/rideflow-data-platform/**
+
+**Стек:** Airflow 3 · ClickHouse · dbt · SeaweedFS (S3) · Astro + DuckDB-WASM · Docker Compose · GitHub Actions. В планах: Kafka, Debezium, Superset, Feast.
+
+| Блок | Статус |
+|---|---|
+| 01 Batch Lakehouse (Weather ✅, NYC Taxi ✅, Superset ⏳) | в работе |
+| 02 CDC · Customer 360 · Reverse ETL | план |
+| 03 Streaming (Clickstream, IoT) | план |
+| 04 Observability (DQ, Lineage, Cost) | план |
+| 05 ML Feature Platform | план |
+
+## Быстрый старт
+```bash
+make env          # .env из шаблона
+make up-batch     # ClickHouse + Postgres + Airflow → http://localhost:8080
+make backfill-weather from=2024-01-01 to=2026-11-15
+make site-install site-dev   # → http://localhost:4321
+make help
+```
+Профили compose позволяют уложиться в 8 GB RAM: одновременно поднимается только один «тяжёлый» профиль.
+
+## Поток данных (блок 01)
+- `taxi_pipeline` (@monthly, catchup): TLC CDN → S3 lake (SeaweedFS) → ClickHouse `raw.yellow_trips` через `s3()`
+  (партиция = месяц) → dbt: `stg_yellow_trips` (DQ-разметка) → `fct_trips` (incremental insert_overwrite)
+  → `agg_demand_hourly`, `agg_zone_monthly`, `dq_trip_rejections` → Parquet.
+- `weather_pipeline` (@daily): Open-Meteo → ClickHouse `raw.weather_hourly` (ReplacingMergeTree) → `dim_weather_hour`.
+- Тесты — гейт через Cosmos (каждая модель = задача + её тесты), включая сверку raw ↔ fct.
+- Перезапуск прогона на последней версии DAG: `make rerun dag=taxi_pipeline run=scheduled__2024-01-01T00:00:00+00:00`.
+
+Сервисы: Airflow http://localhost:8080 · ClickHouse http://localhost:8123 · S3 http://localhost:8333

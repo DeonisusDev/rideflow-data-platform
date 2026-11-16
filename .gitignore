@@ -1,0 +1,7 @@
+.env
+__pycache__/
+*.pyc
+dbt/rideflow/target/
+dbt/rideflow/logs/
+dbt/rideflow/dbt_packages/
+site/public/data/.*.tmp

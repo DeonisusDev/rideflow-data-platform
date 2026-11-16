@@ -1,0 +1,4 @@
+astronomer-cosmos>=1.10,<2
+clickhouse-connect>=0.8,<1
+requests>=2.31
+boto3>=1.34
