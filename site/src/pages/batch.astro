@@ -28,7 +28,7 @@ const edges: { d: string; dashed?: boolean }[] = [
   <span class="chip live">● блок 01 · live</span>
   <h1>Batch Lakehouse</h1>
   <p class="muted lead">
-    Помесячно загружаю поездки жёлтых такси Нью-Йорка и почасовую погоду: сырые файлы ложатся в S3,
+    Загружаю всю историю поездок жёлтых такси Нью-Йорка с 2024 года (115 млн валидных поездок) и почасовую погоду: сырые файлы ложатся в S3,
     ClickHouse читает их напрямую, dbt чистит данные, размечает брак, строит витрины и проверяет их тестами.
     Готовые витрины публикуются в Parquet — все графики ниже считаются прямо в вашем браузере.
   </p>
@@ -72,8 +72,12 @@ const edges: { d: string; dashed?: boolean }[] = [
     </svg>
   </div>
 
-  <h2>Дождь меняет спрос</h2>
-  <p class="muted">Среднее число поездок в час по времени суток: часы с осадками против сухих.</p>
+  <h2>Погода и спрос: дождь — нет, снегопад — да</h2>
+  <p class="muted">
+    Среднее число поездок в час по времени суток в часы с осадками и без. На первых трёх месяцах данных
+    казалось, что в дождь поездок больше; на 33 месяцах эффект почти исчез. Зато сильный снегопад обваливает
+    спрос: 23.02.2026 (13,9 см снега) — 22,7 тыс. поездок при обычных ~110 тыс. Проверьте в песочнице: «Самые слабые дни».
+  </p>
   <div class="card"><div id="ch-hour" class="chart"></div></div>
 
   <div class="two">
@@ -88,7 +92,9 @@ const edges: { d: string; dashed?: boolean }[] = [
   </div>
 
   <h2>Качество данных: что отбраковано и почему</h2>
-  <p class="muted">Ни одна строка не исчезает молча: staging размечает каждую поездку, витрина берёт только <code class="mono">ok</code>, остальное считается здесь. Тест-сверка гарантирует, что raw = fct + брак.</p>
+  <p class="muted">Ни одна строка не исчезает молча: staging размечает каждую поездку, витрина берёт только <code class="mono">ok</code>, остальное считается здесь. Тест-сверка гарантирует, что raw = fct + брак.
+    В 2025 году доля строк с неположительной суммой выросла с 1,8% до 5,9%, а в ноябре 2025 брак достиг 13,6% —
+    сработал dbt-тест-предупреждение с порогом 10%: аномалию в источнике поймал мониторинг, а не аналитик.</p>
   <div class="card"><div id="ch-dq" class="chart short"></div></div>
 
   <h2>BI-слой: Superset <span class="chip mono">dashboards-as-code</span></h2>
@@ -115,7 +121,9 @@ const edges: { d: string; dashed?: boolean }[] = [
   <div class="decisions">
     <div class="card"><b>Идемпотентность по партициям</b><p class="muted">Raw партиционирован по месяцу файла: перезагрузка = DROP PARTITION + INSERT. fct_trips — incremental <code>insert_overwrite</code>, заменяет ровно изменившиеся месяцы.</p></div>
     <div class="card"><b>ClickHouse читает S3 сам</b><p class="muted">Файл не проходит через Python: <code>INSERT … SELECT FROM s3()</code> с явной схемой. Airflow только оркестрирует.</p></div>
-    <div class="card"><b>Дрейф схемы</b><p class="muted">В 2025 TLC добавили <code>cbd_congestion_fee</code>, а регистр колонок плавает. Явная структура + allow_missing_columns + case-insensitive matching.</p></div>
+    <div class="card"><b>Дрейф схемы</b><p class="muted">С 2025 года TLC добавили <code>cbd_congestion_fee</code>, а регистр колонок плавает. Явная структура + allow_missing_columns + case-insensitive matching: 2024 и 2025–2026 грузятся одним кодом.</p></div>
+    <div class="card"><b>Ingest ≠ transform</b><p class="muted">Загрузка месяца и dbt — разные DAG, связанные Airflow Asset. Бэкфилл 33 месяцев запускает dbt несколько раз, а не 33. Сенсор ждёт публикации TLC (~2 мес. задержки) вместо падения.</p></div>
+    <div class="card"><b>Пул ресурсов + ZSTD</b><p class="muted">Тяжёлые запросы к ClickHouse идут через пул Airflow на 1 слот — 123 млн строк на 8 GB RAM без OOM. ZSTD вместо LZ4 сжал данные на ~27%.</p></div>
     <div class="card"><b>Время без сюрпризов</b><p class="muted">TLC пишет «наивное» локальное время, погода — UTC. В staging всё приводится к реальным моментам в America/New_York и стыкуется по часу.</p></div>
     <div class="card"><b>Тесты как гейт</b><p class="muted">Cosmos превращает каждую dbt-модель в задачу Airflow с тестами после неё: unique, relationships, сверка raw↔fct, «у каждого часа спроса есть погода».</p></div>
     <div class="card"><b>BI как код</b><p class="muted">Дашборд экспортирован в YAML и версионируется в git. Пароль БД при экспорте маскируется и подставляется из env только при импорте внутри контейнера.</p></div>
@@ -133,6 +141,7 @@ const edges: { d: string; dashed?: boolean }[] = [
   const TABLES = { demand_hourly: "demand_hourly", zones_monthly: "zones_monthly", dq_rejections: "dq_rejections", weather_daily: "weather_daily", weather_hourly: "weather_hourly" };
 
   const PRESETS: Record<string, string> = {
+    "Самые слабые дни": `SELECT day, sum(trips) AS trips,\n       round(sum(snowfall_cm), 1) AS snow_cm,\n       round(sum(precipitation_mm), 1) AS precip_mm,\n       round(avg(temperature_c), 1) AS temp_c\nFROM demand_hourly\nGROUP BY day ORDER BY trips\nLIMIT 10;`,
     "Эффект дождя по часам": `SELECT hour_of_day,\n       round(avg(trips) FILTER (WHERE is_wet), 0)     AS wet,\n       round(avg(trips) FILTER (WHERE NOT is_wet), 0) AS dry,\n       round(100 * (wet / dry - 1), 1)               AS uplift_pct\nFROM demand_hourly\nGROUP BY 1 ORDER BY 1;`,
     "Топ зон по выручке": `SELECT zone, borough, sum(pickups) AS pickups,\n       round(sum(revenue)) AS revenue_usd\nFROM zones_monthly\nGROUP BY ALL ORDER BY revenue_usd DESC\nLIMIT 15;`,
     "Чаевые и погода": `SELECT condition, count(*) AS hours,\n       round(avg(avg_tip_rate) * 100, 2) AS tip_pct,\n       round(avg(avg_speed_mph), 1) AS speed_mph\nFROM demand_hourly\nGROUP BY 1 ORDER BY hours DESC;`,
@@ -294,9 +303,11 @@ const edges: { d: string; dashed?: boolean }[] = [
       const s = m.stats ?? {};
       const n = (v: number) => v.toLocaleString("ru");
       if (s.trips_valid) {
-        document.getElementById("k-trips")!.textContent = `${(s.trips_valid / 1e6).toFixed(1)} млн`;
+        document.getElementById("k-trips")!.textContent = `${(s.trips_valid / 1e6).toLocaleString("ru", { maximumFractionDigits: 1 })} млн`;
         document.getElementById("k-rej")!.textContent = `${(100 * (1 - s.trips_valid / s.trips_raw)).toFixed(1)}%`;
-        document.getElementById("k-rev")!.textContent = `$${(s.revenue_usd / 1e6).toFixed(0)} млн`;
+        document.getElementById("k-rev")!.textContent = s.revenue_usd >= 1e9
+          ? `$${(s.revenue_usd / 1e9).toLocaleString("ru", { maximumFractionDigits: 2 })} млрд`
+          : `$${(s.revenue_usd / 1e6).toFixed(0)} млн`;
       }
       document.getElementById("k-wx")!.textContent = n(m.files["weather_hourly.parquet"]?.rows ?? 0);
       if (s.period_from) {

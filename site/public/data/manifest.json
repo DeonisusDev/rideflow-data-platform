@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-16T11:38:31.750729+00:00",
+  "generated_at": "2026-11-16T13:50:35.793892+00:00",
   "files": {
     "weather_daily.parquet": {
       "rows": 1052,
@@ -10,22 +10,24 @@
       "bytes": 274895
     },
     "demand_hourly.parquet": {
-      "rows": 2183,
-      "bytes": 68307
+      "rows": 24093,
+      "bytes": 565093
     },
     "zones_monthly.parquet": {
-      "rows": 759,
-      "bytes": 23585
+      "rows": 8463,
+      "bytes": 159357
     },
     "dq_rejections.parquet": {
-      "rows": 27,
-      "bytes": 2025
+      "rows": 297,
+      "bytes": 5136
     }
   },
   "stats": {
-    "trips_valid": 9117833,
-    "trips_raw": 9554778,
-    "months": 3,
-    "revenue_usd": 247600504
+    "trips_valid": 114791170,
+    "trips_raw": 123471721,
+    "months": 33,
+    "revenue_usd": 3310180594,
+    "period_from": "2024-01-01",
+    "period_to": "2026-09-30"
   }
 }

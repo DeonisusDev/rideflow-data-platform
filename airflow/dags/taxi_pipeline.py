@@ -21,7 +21,7 @@ from datetime import datetime, timedelta
 
 from airflow.sdk import Asset, PokeReturnValue, dag, task
 from airflow.timetables.interval import CronDataIntervalTimetable
-from dbt_common import dbt_group
+from dbt_common import CLICKHOUSE_POOL, dbt_group
 
 RAW_TRIPS = Asset("clickhouse://clickhouse:9000/raw/yellow_trips")
 START = datetime.fromisoformat(os.environ.get("TAXI_START_DATE", "2024-01-01"))
@@ -32,7 +32,8 @@ START = datetime.fromisoformat(os.environ.get("TAXI_START_DATE", "2024-01-01"))
     schedule=CronDataIntervalTimetable("@monthly", timezone="UTC"),
     start_date=START,
     catchup=True,
-    max_active_runs=2,  # download+insert is light; transform is the heavy part and runs separately
+    max_active_runs=2,  # downloads overlap; ClickHouse inserts are serialized by the pool
+    default_args={"retries": 2, "retry_delay": timedelta(minutes=2)},
     tags=["rideflow", "batch", "taxi", "ingest"],
     doc_md=__doc__,
 )
@@ -49,7 +50,7 @@ def taxi_ingest():
 
         return tlc.land(data_interval_start.date())
 
-    @task(outlets=[RAW_TRIPS])
+    @task(outlets=[RAW_TRIPS], pool=CLICKHOUSE_POOL)
     def load_raw(_key: str, data_interval_start: datetime | None = None) -> int:
         from rideflow_ingest import tlc
 

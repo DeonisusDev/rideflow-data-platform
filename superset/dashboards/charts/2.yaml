@@ -16,6 +16,6 @@ params:
   y_axis_format: $,.3s
 query_context: null
 cache_timeout: null
-uuid: 9680be68-75fd-42ea-8366-433fa365d7f9
+uuid: 0b6627bf-e0c8-41ad-a881-23fe33e05f8c
 version: 1.0.0
 dataset_uuid: 836fead1-11ca-4ba6-8f55-d65dc6bc486a

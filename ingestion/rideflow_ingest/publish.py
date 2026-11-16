@@ -32,7 +32,9 @@ DATASETS: dict[str, dict[str, str]] = {
 STATS: dict[str, dict[str, str]] = {
     "taxi": {
         "trips_valid": "SELECT count() FROM marts.fct_trips",
-        "trips_raw": "SELECT count() FROM raw.yellow_trips",
+        # only months fct_trips has processed (see assert_trips_reconcile), so the rejection rate is consistent
+        "trips_raw": "SELECT count() FROM raw.yellow_trips "
+        "WHERE _loaded_at <= (SELECT max(_loaded_at) FROM marts.fct_trips)",
         "months": "SELECT uniqExact(_source_month) FROM marts.fct_trips",
         "revenue_usd": "SELECT round(sum(total_amount)) FROM marts.fct_trips",
         "period_from": "SELECT toString(min(pickup_date)) FROM marts.fct_trips",

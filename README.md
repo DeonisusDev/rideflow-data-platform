@@ -7,7 +7,7 @@ Data-платформа вымышленного сервиса такси/до�
 
 | Блок | Статус |
 |---|---|
-| 01 Batch Lakehouse (Weather ✅, NYC Taxi ✅, Superset ✅) | готово |
+| 01 Batch Lakehouse: NYC Taxi 2024-01 → 2026-09 (123 млн строк), погода, Superset | готово |
 | 02 CDC · Customer 360 · Reverse ETL | план |
 | 03 Streaming (Clickstream, IoT) | план |
 | 04 Observability (DQ, Lineage, Cost) | план |

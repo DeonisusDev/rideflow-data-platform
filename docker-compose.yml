@@ -85,13 +85,13 @@ services:
       test: ["CMD", "clickhouse-client", "--user", "${CLICKHOUSE_USER}", "--password", "${CLICKHOUSE_PASSWORD}", "-q", "SELECT 1"]
       interval: 5s
       retries: 20
-    mem_limit: 1536m
+    mem_limit: 2g
 
 
   airflow-init:
     <<: *airflow-common
     # migrate metadb + build dbt manifest (Cosmos renders DAGs from it)
-    command: ["bash", "-c", "airflow db migrate && cd $$DBT_PROJECT_DIR && /opt/airflow/dbt_venv/bin/dbt parse --quiet"]
+    command: ["bash", "-c", "airflow db migrate && airflow pools set clickhouse 1 'Heavy ClickHouse work, one at a time' && cd $$DBT_PROJECT_DIR && /opt/airflow/dbt_venv/bin/dbt parse --quiet"]
     restart: "no"
 
   airflow-api:
